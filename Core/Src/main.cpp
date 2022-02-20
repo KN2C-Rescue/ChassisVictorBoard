@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-int gav = 0;
+
 #include "Functions.hpp"
 /* USER CODE END Includes */
 
