@@ -76,8 +76,8 @@
 #define	NUC_Transmit_len		6
 #define	NUC_Receive_len			6
 #define	NUC_Feedback_len		13
-#define	Power_Transmit_len		5
-#define	Power_Receive_len		7
+#define	PC_len		10		//receive
+#define	CP_len		7		//Transmit
 #define	XBEE_Transmit_len		5
 #define	XBEE_Receive_len		5
 #define	Log_Transmit_len		5

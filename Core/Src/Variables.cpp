@@ -60,7 +60,7 @@ struct _Buhler BuhlerFront,BuhlerBack;
 struct _Teknic TeknicRight,TeknicLeft;
 
 struct _PacketParam PacketNUC	(&huart4,'M','C',NUC_Receive_len,	NUC_Transmit_len);
-struct _PacketParam PacketPower	(&huart2,'P','C',Power_Receive_len,	Power_Transmit_len);
+struct _PacketParam PacketPower	(&huart2,'P','C',PC_len,	CP_len);
 struct _PacketParam PacketXBEE	(&huart1,'X','C',XBEE_Receive_len,	XBEE_Transmit_len);
 struct _PacketParam PacketLog	(&huart5,'L','C',Log_Receive_len,	Log_Transmit_len);
 

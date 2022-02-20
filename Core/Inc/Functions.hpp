@@ -17,7 +17,7 @@
 
 
 extern 	void 		Depack(struct _PacketParam* PacketParam);
-extern	void 		AssignData			(int PacketType)	;
+extern	void 		AssignData			(struct _PacketParam* PacketParam)	;
 extern 	void 		HipHop				(void)	;
 extern	void 		StopMotors			(void)	;
 extern	void 		StartMotors			(void)	;
