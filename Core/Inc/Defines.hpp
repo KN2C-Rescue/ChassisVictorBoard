@@ -52,10 +52,10 @@
 
 
 //Enable
-#define En_Buhler_on 						HAL_GPIO_WritePin(INH_GPIO_Port,INH_Pin,GPIO_PIN_SET)
+#define En_Buhler_on 					HAL_GPIO_WritePin(INH_GPIO_Port,INH_Pin,GPIO_PIN_SET)
 #define En_Buhler_off 					HAL_GPIO_WritePin(INH_GPIO_Port,INH_Pin,GPIO_PIN_RESET)
 
-#define En_Teknic_on 						HAL_GPIO_WritePin(TekEN_GPIO_Port,TekEN_Pin,GPIO_PIN_RESET)
+#define En_Teknic_on 					HAL_GPIO_WritePin(TekEN_GPIO_Port,TekEN_Pin,GPIO_PIN_RESET)
 #define En_Teknic_off 					HAL_GPIO_WritePin(TekEN_GPIO_Port,TekEN_Pin,GPIO_PIN_SET)
 
 

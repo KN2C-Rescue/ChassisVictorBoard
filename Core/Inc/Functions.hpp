@@ -19,8 +19,8 @@
 extern 	void 		Depack(struct _PacketParam* PacketParam);
 extern	void 		AssignData			(int PacketType)	;
 extern 	void 		HipHop				(void)	;
-extern	void 		StopRobot			(void)	;
-extern	void 		StartRobot			(void)	;
+extern	void 		StopMotors			(void)	;
+extern	void 		StartMotors			(void)	;
 extern 	void		ConvertADC2Degree	(void)	;
 extern	void 		Send2Power			(void)	;
 extern 	void 		Send2NUC			(void)	;

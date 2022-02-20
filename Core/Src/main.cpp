@@ -120,7 +120,12 @@ void HAL_TIM_PeriodElapsedCallback	(TIM_HandleTypeDef *htim)
 	if(htim->Instance==TIM10)		//this timer gives an interrupt every 1ms
 	{
 		LastTimeDataReceived++;//this variable must be inside the Controling loop and be plused every 10ms
-		//					 if(LastTimeDataReceived>=100){stopRobot();Priority=MiniPC;}  //stops the motors if no data were recived for a long while
+		if(LastTimeDataReceived>=100)
+		{
+			//stopRobot();
+			//Priority=MiniPC;
+		}
+		//stops the motors if no data were recived for a long while
 	}
 	if(htim->Instance == TIM11)
 	{
@@ -209,11 +214,9 @@ int main(void)
 	//	HAL_UART_Receive_IT		(&huart5, &recLOG , 1)						;	//Log
 	//	HAL_UART_Receive_IT		(&huart6, &recDXL , 1)						;	//Dynamixel
 
-	HAL_GPIO_WritePin(TEK1PWM1_GPIO_Port,TEK1PWM1_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(TEK2PWM1_GPIO_Port,TEK2PWM1_Pin,GPIO_PIN_SET);
 
-	//startRobot();
 
+	StopMotors();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */

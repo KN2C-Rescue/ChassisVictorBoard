@@ -9,13 +9,13 @@
 
 void Send2Power(void)
 {
-		Power_Transmit[	0	]	=	'C'	;
-		Power_Transmit[	1	]	=	'P'	;
-		Power_Transmit[	2	]	=	'd'	;
-		Power_Transmit[	3	]	=	NUC_Receive[0]	;
-		Power_Transmit[Power_Transmit_len-1]	=	'\r'	;
-
-	HAL_UART_Transmit(&huart2, Power_Transmit, Power_Transmit_len, 10);
+	//	Power_Transmit[	0	]	=	'C'	;
+	//	Power_Transmit[	1	]	=	'P'	;
+	//	Power_Transmit[	2	]	=	'd'	;
+	//	Power_Transmit[	3	]	=	NUC_Receive[0]	;
+	//	Power_Transmit[Power_Transmit_len-1]	=	'\r'	;
+	//
+	//	HAL_UART_Transmit(&huart2, Power_Transmit, Power_Transmit_len, 10);
 }
 void Send2NUC(void)
 {
@@ -58,23 +58,23 @@ void AssignData(struct _PacketParam* packetParam)
 	{
 		emPowerOff	  = ( packetParam->receiveData[0] & 0x01 ) >> 0; //0b00000001
 		shutdown	  = ( packetParam->receiveData[0] & 0x02 ) >> 1; //0b00000010
-		chassisDisarm = ( packetParam->receiveData[0] & 0x04 ) >> 2;	//0b00000100
-		reset		  = ( packetParam->receiveData[0] & 0x08 ) >> 3;	//0b00001000
-		armPower	  = ( packetParam->receiveData[0] & 0x10 ) >> 4;	//0b00010000
+		chassisDisarm = ( packetParam->receiveData[0] & 0x04 ) >> 2; //0b00000100
+		reset		  = ( packetParam->receiveData[0] & 0x08 ) >> 3; //0b00001000
+		armPower	  = ( packetParam->receiveData[0] & 0x10 ) >> 4; //0b00010000
 
 
 
 		if(emPowerOff)
 		{
-//			EmergencyPowerOff();
+			//			EmergencyPowerOff();
 		}
 		if(	chassisDisarm || shutdown)
 		{
-			StopRobot();
+			StopMotors();
 		}
 		else
 		{
-			StartRobot();
+			//StartMotors();
 		}
 
 		TeknicRight.PWM	= packetParam->receiveData[1];
@@ -86,11 +86,7 @@ void AssignData(struct _PacketParam* packetParam)
 
 
 
-		//		TIM1->CCR2	=	((BuhlerFront.PWM/127)*30 +	50	)	;			//80...20
-		//		TIM1->CCR3	=	((BuhlerBack.PWM	/127)*30 +	50	)	;			//83...18
-		//
-		//		TIM2->CCR4	=	(TeknicRight.PWM * 1000/255	)	;
-		//		TIM12->CCR1	=	(TeknicLeft.PWM 	* 1000/255	)	;
+
 	}
 	break;
 
@@ -114,10 +110,17 @@ void AssignData(struct _PacketParam* packetParam)
 }
 void sendData2Motors()
 {
+
+//	TIM1->CCR2	=	((BuhlerFront.PWM/127)*30 +	50	)	;			//80...20
+//	TIM1->CCR3	=	((BuhlerBack.PWM	/127)*30 +	50	)	;			//83...18
+
+	TIM2->CCR4	=	(TeknicRight.PWM * 1000/255	)	;
+	TIM12->CCR1	=	(TeknicLeft.PWM 	* 1000/255	)	;
 }
 
 void EmergencyPowerOff()
 {
+
 }
 
 void Depack(struct _PacketParam* packetParam)
@@ -186,12 +189,12 @@ void 	HipHop(void)
 	}
 }
 
-void 	StopRobot(void)
+void 	StopMotors(void)
 {
 	En_Buhler_off;
 	En_Teknic_off;
 }
-void 	StartRobot(void)
+void 	StartMotors(void)
 {
 	En_Buhler_on;
 	En_Teknic_on;

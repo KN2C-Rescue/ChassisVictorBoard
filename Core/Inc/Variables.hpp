@@ -79,7 +79,7 @@ struct _PacketParam
 
 	}
 };
-struct _CNTParam
+struct _ControlParam
 {
 	float kp,ki,kd;
 	float P,I,D ;
@@ -97,7 +97,7 @@ struct _Buhler
 	float Torque;
 
 
-	struct _CNTParam curController,angVelController,angController;
+	struct _ControlParam curController,angVelController,angController;
 };
 
 struct _Teknic
@@ -114,7 +114,7 @@ struct _Teknic
 
 
 
-	struct _CNTParam curController,angVelController,angController;
+	struct _ControlParam curController,angVelController,angController;
 };
 
 
