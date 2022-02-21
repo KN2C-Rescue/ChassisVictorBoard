@@ -25,6 +25,9 @@ extern	int		fanEn;
 extern	int		LEDEn;
 extern	int 	priority;
 
+
+
+
 extern	double 	batteryVoltage;
 extern	double 	chassisCurrrent;
 extern	double 	logicCurrent;
@@ -55,15 +58,18 @@ extern	uint32_t 	Tek2HLFB;
 
 struct _PacketParam
 {
-	char firstHeader;
-	char secondHeader;
-	int depackCounter ;
-	int receiveLenght;
-	int transmitLenght;
-	uint8_t* receiveData;
-	uint8_t* transmitData;
-	uint8_t receiveHeader;
+	char 		firstHeader;
+	char 		secondHeader;
+	int 		depackCounter ;
+	int 		receiveLenght;
+	int 		transmitLenght;
+	uint8_t* 	receiveData;
+	uint8_t* 	transmitData;
+	uint8_t 	receiveHeader;
+	bool 		syncBytesValid;
+
 	UART_HandleTypeDef *huart;
+
 
 
 	_PacketParam(UART_HandleTypeDef *_huart,char _firstHeader,char _secondHeader,int _receiveLenght, int _transmitLenght)

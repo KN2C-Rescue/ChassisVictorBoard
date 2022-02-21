@@ -18,6 +18,9 @@ int		fanEn;
 int		LEDEn;
 int 	priority=1;
 
+bool syncBytesValid=false;
+
+
 double	batteryVoltage=0;
 double 	chassisCurrrent;
 double 	logicCurrent;

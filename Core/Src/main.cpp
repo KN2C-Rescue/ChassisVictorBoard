@@ -98,20 +98,19 @@ void HAL_UART_RxCpltCallback	(UART_HandleTypeDef *huart	)
 
 	if(huart->Instance	==	UsartNUC)
 	{
-		Depack(&PacketNUC);
-		LED_blue_Toggle;
+		CheckRecData(&PacketNUC);
 	}
 	else 	if(huart->Instance	==	UsartPower)
 	{
-		Depack(&PacketPower);
+		CheckRecData(&PacketPower);
 	}
 	else 	if(huart->Instance	==	UsartXBEE)
 	{
-		Depack(&PacketXBEE);
+		CheckRecData(&PacketXBEE);
 	}
 	else 	if(huart->Instance	==	UsartLog)
 	{
-		Depack(&PacketLog);
+		CheckRecData(&PacketLog);
 	}
 
 }
@@ -210,7 +209,7 @@ int main(void)
 
 	//	HAL_UART_Receive_IT		(&huart1, &recXBE , 1)						;	//XBEE
 	//	HAL_UART_Receive_IT		(&huart2, &recPWR , 1)						;	//Power	Board
-	HAL_UART_Receive_IT		(&huart4, &recNUC , 1);	//USRk1
+	HAL_UART_Receive_IT		(PacketNUC.huart, &PacketNUC.receiveHeader , 1);	//USRk1
 	//	HAL_UART_Receive_IT		(&huart5, &recLOG , 1)						;	//Log
 	//	HAL_UART_Receive_IT		(&huart6, &recDXL , 1)						;	//Dynamixel
 
@@ -227,6 +226,9 @@ int main(void)
 
 
 		/* USER CODE BEGIN 3 */
+
+		CheckPacketValidation();
+		HAL_Delay(10);
 
 
 

@@ -7,16 +7,7 @@
 
 #include <Functions.hpp>
 
-void Send2Power(void)
-{
-	//	Power_Transmit[	0	]	=	'C'	;
-	//	Power_Transmit[	1	]	=	'P'	;
-	//	Power_Transmit[	2	]	=	'd'	;
-	//	Power_Transmit[	3	]	=	NUC_Receive[0]	;
-	//	Power_Transmit[Power_Transmit_len-1]	=	'\r'	;
-	//
-	//	HAL_UART_Transmit(&huart2, Power_Transmit, Power_Transmit_len, 10);
-}
+
 void Send2NUC(void)
 {
 	if(priority==MiniPC)
@@ -56,11 +47,13 @@ void AssignData(struct _PacketParam* packetParam)
 	{
 	case 'M':
 	{
+
 		emPowerOff	  = ( packetParam->receiveData[0] & 0x01 ) >> 0; //0b00000001
 		shutdown	  = ( packetParam->receiveData[0] & 0x02 ) >> 1; //0b00000010
 		chassisDisarm = ( packetParam->receiveData[0] & 0x04 ) >> 2; //0b00000100
 		reset		  = ( packetParam->receiveData[0] & 0x08 ) >> 3; //0b00001000
 		armPower	  = ( packetParam->receiveData[0] & 0x10 ) >> 4; //0b00010000
+
 
 
 
@@ -108,11 +101,65 @@ void AssignData(struct _PacketParam* packetParam)
 	}
 
 }
+void CheckPacketValidation(void)
+{
+	if(PacketNUC.syncBytesValid == true)
+	{
+		AssignData(&PacketNUC);
+
+		MakeCPPacket();
+
+		SendPacket(&PacketPower);
+
+		PacketNUC.syncBytesValid = false;
+
+
+
+	}
+	if(PacketPower.syncBytesValid == true)
+	{
+		AssignData(&PacketPower);
+
+		PacketPower.syncBytesValid = false;
+
+	}
+	if(PacketLog.syncBytesValid == true)
+	{
+		AssignData(&PacketLog);
+
+		PacketLog.syncBytesValid = false;
+	}
+	if(PacketXBEE.syncBytesValid == true)
+	{
+		AssignData(&PacketXBEE);
+
+		PacketXBEE.syncBytesValid = false;
+
+	}
+
+}
+
+void MakeCPPacket()
+{
+	PacketPower.transmitData[0] = PacketPower.secondHeader;
+	PacketPower.transmitData[1] = PacketPower.firstHeader;
+
+	PacketPower.transmitData[2] = 'd';
+	PacketPower.transmitData[3] = PacketNUC.receiveData[0];
+	PacketPower.transmitData[4] = '\r';
+
+}
+
+void SendPacket(struct _PacketParam* packetParam)
+{
+	HAL_UART_Transmit(packetParam->huart, packetParam->transmitData, packetParam->transmitLenght,10);
+	LED_blue_Toggle;
+}
 void sendData2Motors()
 {
 
-//	TIM1->CCR2	=	((BuhlerFront.PWM/127)*30 +	50	)	;			//80...20
-//	TIM1->CCR3	=	((BuhlerBack.PWM	/127)*30 +	50	)	;			//83...18
+	//	TIM1->CCR2	=	((BuhlerFront.PWM/127)*30 +	50	)	;			//80...20
+	//	TIM1->CCR3	=	((BuhlerBack.PWM	/127)*30 +	50	)	;			//83...18
 
 	TIM2->CCR4	=	(TeknicRight.PWM * 1000/255	)	;
 	TIM12->CCR1	=	(TeknicLeft.PWM 	* 1000/255	)	;
@@ -123,60 +170,66 @@ void EmergencyPowerOff()
 
 }
 
-void Depack(struct _PacketParam* packetParam)
+void CheckRecData(struct _PacketParam* packetParam)
 {
-
-
-	switch(packetParam->depackCounter)
+	if(packetParam->syncBytesValid == false)
 	{
-	case 0:
-		if(packetParam->receiveHeader==packetParam->firstHeader)
+		switch(packetParam->depackCounter)
 		{
-			packetParam->depackCounter++;
-		}
-		else
-		{
-			packetParam->depackCounter =0;
-		}
+		case 0:
+			if(packetParam->receiveHeader==packetParam->firstHeader)
+			{
+				packetParam->depackCounter++;
+			}
+			else
+			{
+				packetParam->depackCounter =0;
+			}
 
-		HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
-
-		break;
-
-	case 1:
-		if(packetParam->receiveHeader==packetParam->secondHeader)
-		{
-			packetParam->depackCounter++;
-			HAL_UART_Receive_IT(packetParam->huart, packetParam->receiveData	, packetParam->receiveLenght);
-
-		}
-		else if(packetParam->receiveHeader==packetParam->firstHeader )
-		{
-			packetParam->depackCounter=1;
 			HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
-		}
-		else
-		{
+
+			break;
+
+		case 1:
+			if(packetParam->receiveHeader==packetParam->secondHeader)
+			{
+				packetParam->depackCounter++;
+				HAL_UART_Receive_IT(packetParam->huart, packetParam->receiveData	, packetParam->receiveLenght);
+
+			}
+			else if(packetParam->receiveHeader==packetParam->firstHeader )
+			{
+				packetParam->depackCounter=1;
+				HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
+			}
+			else
+			{
+				packetParam->depackCounter=0;
+				HAL_UART_Receive_IT(packetParam->huart,&packetParam->receiveHeader, 1);
+			}
+
+
+			break;
+
+		case 2:
+
+			if( packetParam->receiveData[ packetParam->receiveLenght - 1 ] == '\r' )
+			{
+				LED_red_Toggle;
+				packetParam->syncBytesValid = true;
+			}
+			else
+			{
+				packetParam->syncBytesValid = false;
+			}
+
 			packetParam->depackCounter=0;
-			HAL_UART_Receive_IT(packetParam->huart,&packetParam->receiveHeader, 1);
+			HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
+
+
+			break;
 		}
-
-
-		break;
-
-	case 2:
-
-
-		if( packetParam->receiveData[ packetParam->receiveLenght - 1 ] == '\r' )
-			AssignData(packetParam);
-
-		packetParam->depackCounter=0;
-		HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
-
-
-		break;
 	}
-
 
 }
 void 	HipHop(void)

@@ -9,6 +9,7 @@
 #define DEFINES_HPP_
 
 #include <main.h>
+#include <stdbool.h>
 
 #define Motor1CCR 		TIM1->CCR2
 #define Motor2CCR 		TIM1->CCR3
@@ -77,7 +78,7 @@
 #define	NUC_Receive_len			6
 #define	NUC_Feedback_len		13
 #define	PC_len		10		//receive
-#define	CP_len		7		//Transmit
+#define	CP_len		5		//Transmit
 #define	XBEE_Transmit_len		5
 #define	XBEE_Receive_len		5
 #define	Log_Transmit_len		5
