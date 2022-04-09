@@ -41,6 +41,10 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+int enableUsartNUC = 0;
+int enableUsartPow = 0;
+
+uint16_t adcVal[7] = {};
 
 /* USER CODE END PM */
 
@@ -58,6 +62,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+
+}
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance==TIM3)
@@ -99,10 +108,15 @@ void HAL_UART_RxCpltCallback	(UART_HandleTypeDef *huart	)
 	if(huart->Instance	==	UsartNUC)
 	{
 		CheckRecData(&PacketNUC);
+
+
 	}
 	else 	if(huart->Instance	==	UsartPower)
 	{
 		CheckRecData(&PacketPower);
+
+
+
 	}
 	else 	if(huart->Instance	==	UsartXBEE)
 	{
@@ -112,6 +126,28 @@ void HAL_UART_RxCpltCallback	(UART_HandleTypeDef *huart	)
 	{
 		CheckRecData(&PacketLog);
 	}
+
+
+	if(PacketNUC.receiveStatus == receiveStatusHeader)
+	{
+		HAL_UART_Receive_IT(PacketNUC.huart, &PacketNUC.receiveHeader, 1);
+	}
+	else if(PacketNUC.receiveStatus == receiveStatusPayload)
+	{
+		HAL_UART_Receive_IT(PacketNUC.huart, PacketNUC.receiveData	, PacketNUC.receiveLenght - 2);
+	}
+
+	if(PacketPower.receiveStatus == receiveStatusHeader)
+	{
+		HAL_UART_Receive_IT(PacketPower.huart, &PacketPower.receiveHeader, 1);
+	}
+	else if(PacketPower.receiveStatus == receiveStatusPayload)
+	{
+		HAL_UART_Receive_IT(PacketPower.huart, PacketPower.receiveData	, PacketPower.receiveLenght - 2);
+	}
+
+
+
 
 }
 void HAL_TIM_PeriodElapsedCallback	(TIM_HandleTypeDef *htim)
@@ -160,6 +196,7 @@ int main(void)
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
+	MX_DMA_Init();
 	MX_GPIO_Init();
 	MX_ADC1_Init();
 	MX_TIM1_Init();
@@ -172,14 +209,11 @@ int main(void)
 	MX_USART6_UART_Init();
 	MX_TIM12_Init();
 	MX_UART5_Init();
-	MX_DMA_Init();
 	MX_TIM10_Init();
 	MX_TIM11_Init();
 	/* USER CODE BEGIN 2 */
 
 	HipHop();
-
-	HAL_ADC_Start_DMA		(&hadc1,(uint32_t *)adcVal,7);
 
 	HAL_TIM_Base_Start		(&htim1);	//Buhler 			Timer Start
 	HAL_TIM_PWM_Start		(&htim1, TIM_CHANNEL_2);	//Buhler	1 	PWM 	Start
@@ -208,12 +242,12 @@ int main(void)
 
 
 	//	HAL_UART_Receive_IT		(&huart1, &recXBE , 1)						;	//XBEE
-	//	HAL_UART_Receive_IT		(&huart2, &recPWR , 1)						;	//Power	Board
+	HAL_UART_Receive_IT		(PacketPower.huart,&PacketPower.receiveHeader , 1);	//Power	Board
 	HAL_UART_Receive_IT		(PacketNUC.huart, &PacketNUC.receiveHeader , 1);	//USRk1
 	//	HAL_UART_Receive_IT		(&huart5, &recLOG , 1)						;	//Log
 	//	HAL_UART_Receive_IT		(&huart6, &recDXL , 1)						;	//Dynamixel
 
-
+	HAL_ADC_Start_DMA	(&hadc1,(uint32_t*)adcVal,7);
 
 	StopMotors();
 	/* USER CODE END 2 */
@@ -227,10 +261,30 @@ int main(void)
 
 		/* USER CODE BEGIN 3 */
 
+		if(enableUsartNUC == 1)
+		{
+			HAL_UART_Receive_IT		(PacketNUC.huart, &PacketNUC.receiveHeader , 1);
+			enableUsartNUC = 0;
+		}
+		if(enableUsartNUC == 2)
+		{
+			HAL_UART_Receive_IT		(PacketNUC.huart, PacketNUC.receiveData , PacketNUC.receiveLenght - 2);
+			enableUsartNUC = 0;
+		}
+		if(enableUsartNUC == 3)
+		{
+			CheckRecData(&PacketNUC);
+			enableUsartNUC = 0;
+		}
+
+		if(enableUsartPow == 1)
+		{
+			HAL_UART_Receive_IT		(PacketPower.huart, &PacketPower.receiveHeader , 1);
+			enableUsartPow = 0;
+		}
+
+
 		CheckPacketValidation();
-		HAL_Delay(10);
-
-
 
 	}
 	/* USER CODE END 3 */

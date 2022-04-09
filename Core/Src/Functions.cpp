@@ -10,36 +10,7 @@
 
 void Send2NUC(void)
 {
-	if(priority==MiniPC)
-	{
-		//		NUC_Feedback[	0	]	=	'C'	;
-		//		NUC_Feedback[	1	]	=	'M'	;
-		//		NUC_Feedback[	2	]	=	'F'	;
-		//		NUC_Feedback[	3	]	=	Power_Receive[0]	;
-		//		NUC_Feedback[	4	]	=	(int)(Gas/16)		;
-		//		NUC_Feedback[	5	]	=	Tek1HLFB	;
-		//		NUC_Feedback[	6	]	=	Tek2HLFB	;
-		//		NUC_Feedback[	7	]	=	Power_Receive[1]	;
-		//		NUC_Feedback[	8	]	=	Power_Receive[2]	;
-		//		NUC_Feedback[	9	]	=	Power_Receive[3]	;
-		//		NUC_Feedback[	10]	=	Power_Receive[4]	;
-		//		NUC_Feedback[	11]	=	Power_Receive[5]	;
-		//
-		//		NUC_Feedback[NUC_Feedback_len-1]	=	'\r'	;
-		//
-		//		HAL_UART_Transmit(&huart4, NUC_Feedback, NUC_Feedback_len, 10);
-	}
-	else 	if(priority==Xbee)
-	{
-		//		NUC_Transmit[	0	]	=	'C'	;
-		//		NUC_Transmit[	1	]	=	'M'	;
-		//		NUC_Transmit[	2	]	=	'X'	;
-		//		NUC_Transmit[	3	]	=		0	;
-		//
-		//		NUC_Transmit[NUC_Transmit_len-1]	=	'\r'	;
-		//
-		//		HAL_UART_Transmit(&huart4, NUC_Transmit, NUC_Transmit_len, 10);
-	}
+
 }
 void AssignData(struct _PacketParam* packetParam)
 {
@@ -59,7 +30,7 @@ void AssignData(struct _PacketParam* packetParam)
 
 		if(emPowerOff)
 		{
-			//			EmergencyPowerOff();
+			EmergencyPowerOff();
 		}
 		if(	chassisDisarm || shutdown)
 		{
@@ -67,15 +38,40 @@ void AssignData(struct _PacketParam* packetParam)
 		}
 		else
 		{
-			//StartMotors();
+			StartMotors();
 		}
 
-		TeknicRight.PWM	= packetParam->receiveData[1];
-		TeknicLeft.PWM	= packetParam->receiveData[2];
+		TeknicRight.PWM	= 1000 - packetParam->receiveData[1]*1000/128;
+		TeknicLeft.PWM	= 1000 - packetParam->receiveData[2]*1000/128;
+		TeknicRight.Direction = 0;
+		TeknicLeft.Direction = 0;
+
+		if(TeknicRight.PWM < 0)
+		{
+			TeknicRight.PWM = -TeknicRight.PWM;
+			TeknicRight.Direction = 1;
+		}
+
+		if(TeknicLeft.PWM < 0)
+		{
+			TeknicLeft.PWM = -TeknicLeft.PWM;
+			TeknicLeft.Direction = 1;
+		}
+
+
+
 		BuhlerFront.PWM	= packetParam->receiveData[3];
 		BuhlerBack.PWM	= packetParam->receiveData[4];
 
 
+
+		if(BuhlerFront.PWM	> 127)
+			BuhlerFront.PWM = BuhlerFront.PWM-256;
+
+
+
+		if(BuhlerBack.PWM	> 127)
+			BuhlerBack.PWM = BuhlerBack.PWM-256;
 
 
 
@@ -85,6 +81,15 @@ void AssignData(struct _PacketParam* packetParam)
 
 	case	'P':
 	{
+
+		PacketPower.receiveData[0]; //powerbyte
+		batteryVoltage 	= PacketPower.receiveData[1];
+		logicCurrent	= PacketPower.receiveData[2];
+		teknicCurrent 	= PacketPower.receiveData[3];
+		armCurrent 		= PacketPower.receiveData[4];
+		chassisCurrrent = PacketPower.receiveData[5];
+
+
 
 	}
 	break;
@@ -103,7 +108,7 @@ void AssignData(struct _PacketParam* packetParam)
 }
 void CheckPacketValidation(void)
 {
-	if(PacketNUC.syncBytesValid == true)
+	if(PacketNUC.isPacketFullyReceived == true)
 	{
 		AssignData(&PacketNUC);
 
@@ -111,29 +116,37 @@ void CheckPacketValidation(void)
 
 		SendPacket(&PacketPower);
 
-		PacketNUC.syncBytesValid = false;
+		sendData2Motors();
 
+		LED_red_Toggle;
 
+		PacketNUC.isPacketFullyReceived = false;
 
 	}
-	if(PacketPower.syncBytesValid == true)
+	if(PacketPower.isPacketFullyReceived == true)
 	{
 		AssignData(&PacketPower);
 
-		PacketPower.syncBytesValid = false;
+		MakeCNPacket();
+
+		SendPacket(&PacketNUC);
+
+		LED_blue_Toggle;
+
+		PacketPower.isPacketFullyReceived = false;
 
 	}
-	if(PacketLog.syncBytesValid == true)
+	if(PacketLog.isPacketFullyReceived == true)
 	{
 		AssignData(&PacketLog);
 
-		PacketLog.syncBytesValid = false;
+		PacketLog.isPacketFullyReceived = false;
 	}
-	if(PacketXBEE.syncBytesValid == true)
+	if(PacketXBEE.isPacketFullyReceived == true)
 	{
 		AssignData(&PacketXBEE);
 
-		PacketXBEE.syncBytesValid = false;
+		PacketXBEE.isPacketFullyReceived = false;
 
 	}
 
@@ -149,20 +162,87 @@ void MakeCPPacket()
 	PacketPower.transmitData[4] = '\r';
 
 }
+void MakeCNPacket()
+{
+
+	TeknicRight.Feedback = HAL_GPIO_ReadPin(Tek1HLFB1_GPIO_Port, Tek1HLFB1_Pin);
+	TeknicLeft.Feedback	 = HAL_GPIO_ReadPin(Tek2HLFB1_GPIO_Port, Tek2HLFB1_Pin);
+
+
+	PacketNUC.transmitData[0] = PacketNUC.secondHeader;
+	PacketNUC.transmitData[1] = PacketNUC.firstHeader;
+	PacketNUC.transmitData[2] = 0; //Packetstatus
+	PacketNUC.transmitData[3] = 0; //powerbyte
+	PacketNUC.transmitData[4] = TeknicRight.Feedback;
+	PacketNUC.transmitData[5] = TeknicLeft.Feedback;
+	PacketNUC.transmitData[6] = batteryVoltage;
+	PacketNUC.transmitData[7] = logicCurrent;
+	PacketNUC.transmitData[8] = teknicCurrent;
+	PacketNUC.transmitData[9] = armCurrent;
+	PacketNUC.transmitData[10]= chassisCurrrent;
+	PacketNUC.transmitData[11]= '\r';
+
+}
+
+
 
 void SendPacket(struct _PacketParam* packetParam)
 {
-	HAL_UART_Transmit(packetParam->huart, packetParam->transmitData, packetParam->transmitLenght,10);
-	LED_blue_Toggle;
+	HAL_UART_Transmit_IT(packetParam->huart, packetParam->transmitData, packetParam->transmitLenght);
+
 }
 void sendData2Motors()
 {
 
-	//	TIM1->CCR2	=	((BuhlerFront.PWM/127)*30 +	50	)	;			//80...20
-	//	TIM1->CCR3	=	((BuhlerBack.PWM	/127)*30 +	50	)	;			//83...18
+	if(BuhlerFront.PWM == 127)
+	{
+		HAL_GPIO_WritePin(Flipper_Front_B_GPIO_Port, Flipper_Front_B_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(Flipper_Front_A_GPIO_Port, Flipper_Front_A_Pin, GPIO_PIN_RESET);
+	}
+	else if(BuhlerFront.PWM == -127)
+	{
+		HAL_GPIO_WritePin(Flipper_Front_B_GPIO_Port, Flipper_Front_B_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(Flipper_Front_A_GPIO_Port, Flipper_Front_A_Pin, GPIO_PIN_SET);
+	}
+	else if(BuhlerFront.PWM == 0)
+	{
+		HAL_GPIO_WritePin(Flipper_Front_B_GPIO_Port, Flipper_Front_B_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(Flipper_Front_A_GPIO_Port, Flipper_Front_A_Pin, GPIO_PIN_RESET);
+	}
 
-	TIM2->CCR4	=	(TeknicRight.PWM * 1000/255	)	;
-	TIM12->CCR1	=	(TeknicLeft.PWM 	* 1000/255	)	;
+
+	if(BuhlerBack.PWM == 127)
+	{
+		HAL_GPIO_WritePin(Flipper_Back_B_GPIO_Port, Flipper_Back_B_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(Flipper_Back_A_GPIO_Port, Flipper_Back_A_Pin, GPIO_PIN_RESET);
+	}
+	else if(BuhlerBack.PWM == -127)
+	{
+		HAL_GPIO_WritePin(Flipper_Back_B_GPIO_Port, Flipper_Back_B_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(Flipper_Back_A_GPIO_Port, Flipper_Back_A_Pin, GPIO_PIN_SET);
+	}
+	else if(BuhlerBack.PWM == 0)
+	{
+		HAL_GPIO_WritePin(Flipper_Back_B_GPIO_Port, Flipper_Back_B_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(Flipper_Back_A_GPIO_Port, Flipper_Back_A_Pin, GPIO_PIN_RESET);
+	}
+
+
+
+
+	TIM2->CCR4	=	(TeknicRight.PWM )	;
+	TIM12->CCR1	=	(TeknicLeft.PWM )	;
+
+	if(TeknicRight.Direction == 1)
+		HAL_GPIO_WritePin(TEK1PWM1_GPIO_Port, TEK1PWM1_Pin, GPIO_PIN_SET);
+	else
+		HAL_GPIO_WritePin(TEK1PWM1_GPIO_Port, TEK1PWM1_Pin, GPIO_PIN_RESET);
+
+
+	if(TeknicLeft.Direction == 1)
+		HAL_GPIO_WritePin(TEK2PWM1_GPIO_Port, TEK2PWM1_Pin, GPIO_PIN_SET);
+	else
+		HAL_GPIO_WritePin(TEK2PWM1_GPIO_Port, TEK2PWM1_Pin, GPIO_PIN_RESET);
 }
 
 void EmergencyPowerOff()
@@ -172,63 +252,53 @@ void EmergencyPowerOff()
 
 void CheckRecData(struct _PacketParam* packetParam)
 {
-	if(packetParam->syncBytesValid == false)
+	packetParam->receiveStatus = receiveStatusHeader;
+	switch(packetParam->depackCounter)
 	{
-		switch(packetParam->depackCounter)
+	case 0:
+		if(packetParam->receiveHeader==packetParam->firstHeader)
 		{
-		case 0:
-			if(packetParam->receiveHeader==packetParam->firstHeader)
-			{
-				packetParam->depackCounter++;
-			}
-			else
-			{
-				packetParam->depackCounter =0;
-			}
-
-			HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
-
-			break;
-
-		case 1:
-			if(packetParam->receiveHeader==packetParam->secondHeader)
-			{
-				packetParam->depackCounter++;
-				HAL_UART_Receive_IT(packetParam->huart, packetParam->receiveData	, packetParam->receiveLenght);
-
-			}
-			else if(packetParam->receiveHeader==packetParam->firstHeader )
-			{
-				packetParam->depackCounter=1;
-				HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
-			}
-			else
-			{
-				packetParam->depackCounter=0;
-				HAL_UART_Receive_IT(packetParam->huart,&packetParam->receiveHeader, 1);
-			}
-
-
-			break;
-
-		case 2:
-
-			if( packetParam->receiveData[ packetParam->receiveLenght - 1 ] == '\r' )
-			{
-				LED_red_Toggle;
-				packetParam->syncBytesValid = true;
-			}
-			else
-			{
-				packetParam->syncBytesValid = false;
-			}
-
-			packetParam->depackCounter=0;
-			HAL_UART_Receive_IT(packetParam->huart, &packetParam->receiveHeader, 1);
-
-
-			break;
+			packetParam->depackCounter++;
 		}
+		else
+		{
+			packetParam->depackCounter =0;
+		}
+
+		break;
+
+	case 1:
+		if(packetParam->receiveHeader==packetParam->secondHeader)
+		{
+			packetParam->depackCounter++;
+			packetParam->receiveStatus = receiveStatusPayload;
+		}
+		else if(packetParam->receiveHeader==packetParam->firstHeader )
+		{
+			packetParam->depackCounter=1;
+		}
+		else
+		{
+			packetParam->depackCounter=0;
+		}
+
+
+		break;
+
+	case 2:
+
+		if( packetParam->receiveData[ packetParam->receiveLenght - 3 ] == '\r' )
+		{
+			packetParam->isPacketFullyReceived = true;
+		}
+		else
+		{
+			packetParam->isPacketFullyReceived = false;
+		}
+		packetParam->depackCounter=0;
+
+
+		break;
 	}
 
 }

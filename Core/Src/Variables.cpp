@@ -18,14 +18,14 @@ int		fanEn;
 int		LEDEn;
 int 	priority=1;
 
-bool syncBytesValid=false;
+bool isPacketFullyReceived=false;
 
 
-double	batteryVoltage=0;
-double 	chassisCurrrent;
-double 	logicCurrent;
-double  teknicCurrent;
-double 	armCurrent;
+uint8_t		batteryVoltage=0;
+uint8_t 	chassisCurrrent;
+uint8_t 	logicCurrent;
+uint8_t  	teknicCurrent;
+uint8_t 	armCurrent;
 
 uint8_t 	recNUC;
 uint8_t 	recXBEE;
@@ -49,7 +49,7 @@ uint8_t 	emPowerOff=0;
 //Poweroff Arm whole power
 uint8_t 	armPower=0;
 
-uint16_t 	adcVal[7]={0};
+//uint32_t 	adcVal[7];
 
 uint32_t 	IC_Val11=0;
 uint32_t 	IC_Val12=0;
@@ -62,8 +62,9 @@ uint32_t 	Tek2HLFB=0;
 struct _Buhler BuhlerFront,BuhlerBack;
 struct _Teknic TeknicRight,TeknicLeft;
 
-struct _PacketParam PacketNUC	(&huart4,'M','C',NUC_Receive_len,	NUC_Transmit_len);
+struct _PacketParam PacketNUC	(&huart4,'M','C',MC_len,	CM_len);
 struct _PacketParam PacketPower	(&huart2,'P','C',PC_len,	CP_len);
+
 struct _PacketParam PacketXBEE	(&huart1,'X','C',XBEE_Receive_len,	XBEE_Transmit_len);
 struct _PacketParam PacketLog	(&huart5,'L','C',Log_Receive_len,	Log_Transmit_len);
 

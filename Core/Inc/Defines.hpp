@@ -16,13 +16,13 @@
 
 
 ////placing ADC data into their variables
-#define	Pot1			adcVal[0]
-#define	Pot2			adcVal[1]
-#define Current2R		adcVal[2]
-#define Current2L		adcVal[3]
-#define	Current1R		adcVal[4]
-#define	Current1L		adcVal[5]
-#define	Gas				adcVal[6]
+//#define	Pot1			adcVal[0]
+//#define	Pot2			adcVal[1]
+//#define Current2R		adcVal[2]
+//#define Current2L		adcVal[3]
+//#define	Current1R		adcVal[4]
+//#define	Current1L		adcVal[5]
+//#define	Gas				adcVal[6]
 
 
 
@@ -74,10 +74,9 @@
 
 
 //size
-#define	NUC_Transmit_len		6
-#define	NUC_Receive_len			6
-#define	NUC_Feedback_len		13
-#define	PC_len		10		//receive
+#define	MC_len		8
+#define	CM_len		12
+#define	PC_len		10		//Receive
 #define	CP_len		5		//Transmit
 #define	XBEE_Transmit_len		5
 #define	XBEE_Receive_len		5
@@ -110,6 +109,8 @@
 
 
 
+#define receiveStatusHeader  0
+#define receiveStatusPayload 1
 
 
 

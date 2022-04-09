@@ -28,11 +28,11 @@ extern	int 	priority;
 
 
 
-extern	double 	batteryVoltage;
-extern	double 	chassisCurrrent;
-extern	double 	logicCurrent;
-extern	double  teknicCurrent;
-extern	double 	armCurrent;
+extern	uint8_t 	batteryVoltage;
+extern	uint8_t 	chassisCurrrent;
+extern	uint8_t 	logicCurrent;
+extern	uint8_t  	teknicCurrent;
+extern	uint8_t 	armCurrent;
 
 extern	uint8_t 	recNUC;
 extern	uint8_t 	recXBEE;
@@ -47,7 +47,7 @@ extern	uint8_t 	shutdown;
 extern	uint8_t 	emPowerOff;
 extern	uint8_t 	armPower;
 
-extern	uint16_t 	adcVal[7];
+//extern	uint32_t 	adcVal[7];
 
 extern	uint32_t 	IC_Val11;
 extern	uint32_t 	IC_Val12;
@@ -66,7 +66,9 @@ struct _PacketParam
 	uint8_t* 	receiveData;
 	uint8_t* 	transmitData;
 	uint8_t 	receiveHeader;
-	bool 		syncBytesValid;
+	int 		isPacketFullyReceived;
+	int 		payloadReceived;
+	int 		receiveStatus;
 
 	UART_HandleTypeDef *huart;
 
@@ -79,10 +81,14 @@ struct _PacketParam
 
 		receiveLenght = _receiveLenght;
 		transmitLenght = _transmitLenght;
-		receiveData = (uint8_t*) malloc(receiveLenght * sizeof(uint8_t));
+		receiveData = (uint8_t*) malloc((receiveLenght-2) * sizeof(uint8_t));
 		transmitData = (uint8_t*) malloc(transmitLenght * sizeof(uint8_t));
 		huart = _huart;
+		payloadReceived = false;
 
+
+		//delete
+		receiveStatus = receiveStatusHeader;
 	}
 };
 struct _ControlParam
@@ -112,6 +118,8 @@ struct _Teknic
 	int Direction;
 	int Orientation;
 	int Enable;
+
+	uint8_t Feedback;
 
 	float AngVel;
 	float Angle;

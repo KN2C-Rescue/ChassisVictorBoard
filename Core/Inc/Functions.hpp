@@ -28,6 +28,7 @@ extern 	void 		sendData2Motors		(void);
 extern 	void 		CheckPacketValidation(void);
 extern 	void 		MakeCPPacket		(void);
 extern 	void 		SendPacket			(struct _PacketParam* packetParam);
+extern  void		MakeCNPacket();
 
 
 #endif /* INC_FUNCTIONS_HPP_ */
